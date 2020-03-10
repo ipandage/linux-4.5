@@ -4130,6 +4130,7 @@ ncls:
 		skb->vlan_tci = 0;
 	}
 
+    // 获取协议类型
 	type = skb->protocol;
 
 	/* deliver only exact match when indicated */
@@ -4139,6 +4140,7 @@ ncls:
 						   PTYPE_HASH_MASK]);
 	}
 
+	// 根据设备特定的协议进行报文处理
 	deliver_ptype_list_skb(skb, &pt_prev, orig_dev, type,
 			       &orig_dev->ptype_specific);
 
@@ -8097,8 +8099,10 @@ static int __init net_dev_init(void)
 	if (register_pernet_device(&default_device_ops))
 		goto out;
 
+	// net_tx_action 响应数据
 	open_softirq(NET_TX_SOFTIRQ, net_tx_action);
-	open_softirq(NET_RX_SOFTIRQ, net_rx_action);
+    // net_rx_action 接收数据
+    open_softirq(NET_RX_SOFTIRQ, net_rx_action);
 
 	hotcpu_notifier(dev_cpu_callback, 0);
 	dst_subsys_init();

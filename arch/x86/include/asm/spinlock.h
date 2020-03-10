@@ -139,6 +139,7 @@ static __always_inline int arch_spin_trylock(arch_spinlock_t *lock)
 	new.head_tail = old.head_tail + (TICKET_LOCK_INC << TICKET_SHIFT);
 	new.head_tail &= ~TICKET_SLOWPATH_FLAG;
 
+	// cmpxchg 是一个完全内存屏障
 	/* cmpxchg is a full barrier, so nothing can move before it */
 	return cmpxchg(&lock->head_tail, old.head_tail, new.head_tail) == old.head_tail;
 }

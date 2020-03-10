@@ -1365,15 +1365,17 @@ SYSCALL_DEFINE3(bind, int, fd, struct sockaddr __user *, umyaddr, int, addrlen)
 	struct socket *sock;
 	struct sockaddr_storage address;
 	int err, fput_needed;
-
+    // 根据fd获取socket结构
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
 	if (sock) {
+	    // 将用户空间的地址拷贝到内核空间
 		err = move_addr_to_kernel(umyaddr, addrlen, &address);
 		if (err >= 0) {
 			err = security_socket_bind(sock,
 						   (struct sockaddr *)&address,
 						   addrlen);
 			if (!err)
+			    // 根据指定协议域及socket类型进行bind
 				err = sock->ops->bind(sock,
 						      (struct sockaddr *)
 						      &address, addrlen);

@@ -331,8 +331,8 @@ static struct vfsmount *sock_mnt __read_mostly;
 
 static struct file_system_type sock_fs_type = {
 	.name =		"sockfs",
-	.mount =	sockfs_mount,
-	.kill_sb =	kill_anon_super,
+	.mount =	sockfs_mount, // 定义了如何挂载文件系统
+	.kill_sb =	kill_anon_super, // 定义了如何删除该超级块
 };
 
 /*
@@ -1210,6 +1210,7 @@ int sock_create_kern(struct net *net, int family, int type, int protocol, struct
 }
 EXPORT_SYMBOL(sock_create_kern);
 
+// sock_create->__sock_create->sock_alloc 分配socket结构
 SYSCALL_DEFINE3(socket, int, family, int, type, int, protocol)
 {
 	int retval;
@@ -1234,6 +1235,7 @@ SYSCALL_DEFINE3(socket, int, family, int, type, int, protocol)
 	if (retval < 0)
 		goto out;
 
+	// sock_map_fd 让 sock_alloc_file 申请file结构后，让socket和该文件关联
 	retval = sock_map_fd(sock, flags & (O_CLOEXEC | O_NONBLOCK));
 	if (retval < 0)
 		goto out_release;
@@ -1397,14 +1399,17 @@ SYSCALL_DEFINE2(listen, int, fd, int, backlog)
 	int err, fput_needed;
 	int somaxconn;
 
+	// 根据文件描述符获取socket对象
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
 	if (sock) {
+	    // 根据系统中的设置调整参数backlog
 		somaxconn = sock_net(sock->sk)->core.sysctl_somaxconn;
 		if ((unsigned int)backlog > somaxconn)
 			backlog = somaxconn;
 
 		err = security_socket_listen(sock, backlog);
 		if (!err)
+		    // 调用特定协议簇的listen函数
 			err = sock->ops->listen(sock, backlog);
 
 		fput_light(sock->file, fput_needed);
@@ -1438,15 +1443,18 @@ SYSCALL_DEFINE4(accept4, int, fd, struct sockaddr __user *, upeer_sockaddr,
 	if (SOCK_NONBLOCK != O_NONBLOCK && (flags & SOCK_NONBLOCK))
 		flags = (flags & ~SOCK_NONBLOCK) | O_NONBLOCK;
 
+    // 根据server_fd获取服务端的socket结构
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
 	if (!sock)
 		goto out;
 
 	err = -ENFILE;
+    // 给客户端分配一个新的socket结构
 	newsock = sock_alloc();
 	if (!newsock)
 		goto out_put;
 
+    // 把服务端的socket类型和ops赋给客户端的socket
 	newsock->type = sock->type;
 	newsock->ops = sock->ops;
 
@@ -1456,12 +1464,14 @@ SYSCALL_DEFINE4(accept4, int, fd, struct sockaddr __user *, upeer_sockaddr,
 	 */
 	__module_get(newsock->ops->owner);
 
+    // 获取一个未使用的fd句柄
 	newfd = get_unused_fd_flags(flags);
 	if (unlikely(newfd < 0)) {
 		err = newfd;
 		sock_release(newsock);
 		goto out_put;
 	}
+    // 分配一个新的file结构
 	newfile = sock_alloc_file(newsock, flags, sock->sk->sk_prot_creator->name);
 	if (IS_ERR(newfile)) {
 		err = PTR_ERR(newfile);
@@ -1470,6 +1480,7 @@ SYSCALL_DEFINE4(accept4, int, fd, struct sockaddr __user *, upeer_sockaddr,
 		goto out_put;
 	}
 
+    // 调用对应协议簇的accept函数
 	err = security_socket_accept(sock, newsock);
 	if (err)
 		goto out_fd;
@@ -1484,6 +1495,7 @@ SYSCALL_DEFINE4(accept4, int, fd, struct sockaddr __user *, upeer_sockaddr,
 			err = -ECONNABORTED;
 			goto out_fd;
 		}
+        // 拷贝地址到用户态
 		err = move_addr_to_user(&address,
 					len, upeer_sockaddr, upeer_addrlen);
 		if (err < 0)
@@ -1491,7 +1503,7 @@ SYSCALL_DEFINE4(accept4, int, fd, struct sockaddr __user *, upeer_sockaddr,
 	}
 
 	/* File flags are not inherited via accept() unlike another OSes. */
-
+    // 把新创建的fd和file关联
 	fd_install(newfd, newfile);
 	err = newfd;
 
@@ -2481,6 +2493,7 @@ void sock_unregister(int family)
 }
 EXPORT_SYMBOL(sock_unregister);
 
+// 主要对socket 文件系统进行注册和挂载
 static int __init sock_init(void)
 {
 	int err;
@@ -2493,18 +2506,22 @@ static int __init sock_init(void)
 
 	/*
 	 *      Initialize skbuff SLAB cache
+	 *      初始化skb数据包slab缓存
 	 */
 	skb_init();
 
 	/*
 	 *      Initialize the protocols module.
+	 *      创建一块用户socket相关的inode缓存
 	 */
 
 	init_inodecache();
 
+	// 将socket文件系统注册到内核中
 	err = register_filesystem(&sock_fs_type);
 	if (err)
 		goto out_fs;
+	// 挂载socket fs
 	sock_mnt = kern_mount(&sock_fs_type);
 	if (IS_ERR(sock_mnt)) {
 		err = PTR_ERR(sock_mnt);

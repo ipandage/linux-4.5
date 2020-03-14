@@ -200,16 +200,19 @@ int inet_listen(struct socket *sock, int backlog)
 	lock_sock(sk);
 
 	err = -EINVAL;
+    // 假如状态不是SS_UNCONNECTED或者类型不是SOCK_STREAM则退出
 	if (sock->state != SS_UNCONNECTED || sock->type != SOCK_STREAM)
 		goto out;
 
 	old_state = sk->sk_state;
+    // 这里检查sock的状态是否是TCP_CLOSE或TCP_LISTEN
 	if (!((1 << old_state) & (TCPF_CLOSE | TCPF_LISTEN)))
 		goto out;
 
 	/* Really, if the socket is already in listen state
 	 * we can only allow the backlog to be adjusted.
 	 */
+    // 当sock的状态不是TCP_LISTEN时, 进行监听初始化初始化
 	if (old_state != TCP_LISTEN) {
 		/* Check special setups for testing purpose to enable TFO w/o
 		 * requiring TCP_FASTOPEN sockopt.
@@ -233,6 +236,7 @@ int inet_listen(struct socket *sock, int backlog)
 		if (err)
 			goto out;
 	}
+    // 设置sock的最大并发连接请求数
 	sk->sk_max_ack_backlog = backlog;
 	err = 0;
 
@@ -460,6 +464,7 @@ int inet_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len)
 	 *  is temporarily down)
 	 */
 	err = -EADDRNOTAVAIL;
+	// 地址类型检测
 	if (!net->ipv4.sysctl_ip_nonlocal_bind &&
 	    !(inet->freebind || inet->transparent) &&
 	    addr->sin_addr.s_addr != htonl(INADDR_ANY) &&
@@ -468,6 +473,7 @@ int inet_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len)
 	    chk_addr_ret != RTN_BROADCAST)
 		goto out;
 
+	// 端口范围检测
 	snum = ntohs(addr->sin_port);
 	err = -EACCES;
 	if (snum && snum < PROT_SOCK &&
@@ -488,10 +494,12 @@ int inet_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len)
 	if (sk->sk_state != TCP_CLOSE || inet->inet_num)
 		goto out_release_sock;
 
+	// 设置源地址和接收地址
 	inet->inet_rcv_saddr = inet->inet_saddr = addr->sin_addr.s_addr;
 	if (chk_addr_ret == RTN_MULTICAST || chk_addr_ret == RTN_BROADCAST)
 		inet->inet_saddr = 0;  /* Use device */
 
+	// 检查端口是否被占用
 	/* Make sure we are allowed to bind here. */
 	if ((snum || !inet->bind_address_no_port) &&
 	    sk->sk_prot->get_port(sk, snum)) {
@@ -504,6 +512,7 @@ int inet_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len)
 		sk->sk_userlocks |= SOCK_BINDADDR_LOCK;
 	if (snum)
 		sk->sk_userlocks |= SOCK_BINDPORT_LOCK;
+	// 初始化目标地址和端口
 	inet->inet_sport = htons(inet->inet_num);
 	inet->inet_daddr = 0;
 	inet->inet_dport = 0;
@@ -668,6 +677,7 @@ int inet_accept(struct socket *sock, struct socket *newsock, int flags)
 {
 	struct sock *sk1 = sock->sk;
 	int err = -EINVAL;
+    // 如果使用的是TCP, 则sk_prot为tcp_prot, accept为inet_csk_accept()获取新连接的sock
 	struct sock *sk2 = sk1->sk_prot->accept(sk1, flags, &err);
 
 	if (!sk2)
@@ -680,8 +690,10 @@ int inet_accept(struct socket *sock, struct socket *newsock, int flags)
 		  (TCPF_ESTABLISHED | TCPF_SYN_RECV |
 		  TCPF_CLOSE_WAIT | TCPF_CLOSE)));
 
+    // 把sock和socket嫁接起来, 让它们能相互索引
 	sock_graft(sk2, newsock);
 
+    // 把新socket的状态设为已连接
 	newsock->state = SS_CONNECTED;
 	err = 0;
 	release_sock(sk2);

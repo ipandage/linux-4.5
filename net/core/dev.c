@@ -8099,6 +8099,7 @@ static int __init net_dev_init(void)
 	if (register_pernet_device(&default_device_ops))
 		goto out;
 
+	// 注册软中断
 	// net_tx_action 响应数据
 	open_softirq(NET_TX_SOFTIRQ, net_tx_action);
     // net_rx_action 接收数据

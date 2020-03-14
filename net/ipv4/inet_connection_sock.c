@@ -314,22 +314,27 @@ struct sock *inet_csk_accept(struct sock *sk, int flags, int *err)
 	 * and that it has something pending.
 	 */
 	error = -EINVAL;
+    // socket必须处于监听状态
 	if (sk->sk_state != TCP_LISTEN)
 		goto out_err;
 
 	/* Find already established connection */
+    // 发现有ESTABLISHED状态的连接请求块
 	if (reqsk_queue_empty(queue)) {
+        // 获取等待超时时间, 如果是非阻塞则为0
 		long timeo = sock_rcvtimeo(sk, flags & O_NONBLOCK);
 
 		/* If this is a non blocking socket don't sleep */
+        // 如果是非阻塞的, 则直接退出
 		error = -EAGAIN;
 		if (!timeo)
 			goto out_err;
-
+        // 阻塞等待, 直到有全连接。如果用户有设置等待超时时间, 超时后会退出
 		error = inet_csk_wait_for_connect(sk, timeo);
 		if (error)
 			goto out_err;
 	}
+    // 获取新连接的sock, 释放连接控制块
 	req = reqsk_queue_remove(queue, sk);
 	newsk = req->sk;
 

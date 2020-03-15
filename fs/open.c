@@ -466,16 +466,19 @@ out:
 	return error;
 }
 
+
 SYSCALL_DEFINE1(chroot, const char __user *, filename)
 {
 	struct path path;
 	int error;
 	unsigned int lookup_flags = LOOKUP_FOLLOW | LOOKUP_DIRECTORY;
 retry:
+    // 从当前目录开始查找获取path
 	error = user_path_at(AT_FDCWD, filename, lookup_flags, &path);
 	if (error)
 		goto out;
 
+    // 检查inode权限
 	error = inode_permission(path.dentry->d_inode, MAY_EXEC | MAY_CHDIR);
 	if (error)
 		goto dput_and_out;
@@ -487,6 +490,7 @@ retry:
 	if (error)
 		goto dput_and_out;
 
+    // 把当前进程的rootfs设置为新的path
 	set_fs_root(current->fs, &path);
 	error = 0;
 dput_and_out:

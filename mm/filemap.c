@@ -2703,12 +2703,12 @@ ssize_t __generic_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
 	ssize_t		status;
 
 	/* We can write back this queue in page reclaim */
-	current->backing_dev_info = inode_to_bdi(inode);
+	current->backing_dev_info = inode_to_bdi(inode); // 获取设备描述信息
 	err = file_remove_privs(file);
 	if (err)
 		goto out;
 
-	err = file_update_time(file);
+	err = file_update_time(file); // 更新文件时间
 	if (err)
 		goto out;
 

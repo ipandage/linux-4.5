@@ -92,10 +92,10 @@ static ssize_t
 ext4_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
 {
 	struct file *file = iocb->ki_filp;
-	struct inode *inode = file_inode(iocb->ki_filp);
+	struct inode *inode = file_inode(iocb->ki_filp); // 获取文件的inode
 	struct mutex *aio_mutex = NULL;
 	struct blk_plug plug;
-	int o_direct = iocb->ki_flags & IOCB_DIRECT;
+	int o_direct = iocb->ki_flags & IOCB_DIRECT; // IO Driect标志
 	int overwrite = 0;
 	ssize_t ret;
 
@@ -103,6 +103,7 @@ ext4_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
 	 * Unaligned direct AIO must be serialized; see comment above
 	 * In the case of O_APPEND, assume that we must always serialize
 	 */
+	// 未对齐(针对block)的异步IO必须顺序进行
 	if (o_direct &&
 	    ext4_test_inode_flag(inode, EXT4_INODE_EXTENTS) &&
 	    !is_sync_kiocb(iocb) &&
@@ -110,11 +111,11 @@ ext4_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
 	     ext4_unaligned_aio(inode, from, iocb->ki_pos))) {
 		aio_mutex = ext4_aio_mutex(inode);
 		mutex_lock(aio_mutex);
-		ext4_unwritten_wait(inode);
+		ext4_unwritten_wait(inode); // 进入等待队列, 直到inode的i_unwritten状态变成0
 	}
 
 	inode_lock(inode);
-	ret = generic_write_checks(iocb, from);
+	ret = generic_write_checks(iocb, from); // 进行写入权限的校验工作
 	if (ret <= 0)
 		goto out;
 
@@ -122,6 +123,7 @@ ext4_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
 	 * If we have encountered a bitmap-format file, the size limit
 	 * is smaller than s_maxbytes, which is for extent-mapped files.
 	 */
+    // 非extends类型的文件
 	if (!(ext4_test_inode_flag(inode, EXT4_INODE_EXTENTS))) {
 		struct ext4_sb_info *sbi = EXT4_SB(inode->i_sb);
 

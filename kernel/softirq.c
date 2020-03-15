@@ -430,6 +430,7 @@ void __raise_softirq_irqoff(unsigned int nr)
 	or_softirq_pending(1UL << nr);
 }
 
+// 软中断注册函数
 void open_softirq(int nr, void (*action)(struct softirq_action *))
 {
 	softirq_vec[nr].action = action;
@@ -651,6 +652,7 @@ static int ksoftirqd_should_run(unsigned int cpu)
 	return local_softirq_pending();
 }
 
+// 系统初始化时候的守护线程最终调用了run_ksoftirqd, 其核心实现为__do_softirq（）函数
 static void run_ksoftirqd(unsigned int cpu)
 {
 	local_irq_disable();

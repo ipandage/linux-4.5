@@ -222,6 +222,7 @@ int tsk_fork_get_node(struct task_struct *tsk)
 	return NUMA_NO_NODE;
 }
 
+// 创建内核线程
 static void create_kthread(struct kthread_create_info *create)
 {
 	int pid;

@@ -81,6 +81,7 @@ void __init init_ISA_irqs(void)
 		irq_set_chip_and_handler(i, chip, handle_level_irq);
 }
 
+// 通过设置中断门初始化了中断向量
 void __init init_IRQ(void)
 {
 	int i;
@@ -184,6 +185,7 @@ void __init native_init_IRQ(void)
 #endif
 	for_each_clear_bit_from(i, used_vectors, first_system_vector) {
 		/* IA32_SYSCALL_VECTOR could be used in trap_init already. */
+		// 通过set_intr_gate设置中断门并且初始化中断向量
 		set_intr_gate(i, irq_entries_start +
 				8 * (i - FIRST_EXTERNAL_VECTOR));
 	}

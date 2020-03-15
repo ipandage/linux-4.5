@@ -471,6 +471,7 @@ ssize_t __vfs_read(struct file *file, char __user *buf, size_t count,
 	if (file->f_op->read)
 		return file->f_op->read(file, buf, count, pos);
 	else if (file->f_op->read_iter)
+        //file->f_op->read_iter 把控制权交给了ext4之类的文件系统
 		return new_sync_read(file, buf, count, pos);
 	else
 		return -EINVAL;
@@ -601,15 +602,18 @@ static inline void file_pos_write(struct file *file, loff_t pos)
 
 SYSCALL_DEFINE3(read, unsigned int, fd, char __user *, buf, size_t, count)
 {
+    // 获取当前进程下指定的fd文件句柄
 	struct fd f = fdget_pos(fd);
 	ssize_t ret = -EBADF;
 
 	if (f.file) {
+        // 获取当前文件已经读取的位置
 		loff_t pos = file_pos_read(f.file);
 		ret = vfs_read(f.file, buf, count, &pos);
 		if (ret >= 0)
+            // 保存最新的读取位置
 			file_pos_write(f.file, pos);
-		fdput_pos(f);
+		fdput_pos(f); // 有必要的情况下释放fd中的file结构
 	}
 	return ret;
 }

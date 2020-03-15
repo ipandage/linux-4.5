@@ -26,13 +26,14 @@ struct fs_struct;
  * As soon as a single namespace is cloned or unshared, the
  * nsproxy is copied.
  */
+// 一个进程可以属于多个namesapce
 struct nsproxy {
 	atomic_t count;
-	struct uts_namespace *uts_ns;
-	struct ipc_namespace *ipc_ns;
-	struct mnt_namespace *mnt_ns;
+	struct uts_namespace *uts_ns; // 运行内核的名称、版本、底层体系结构类型等信息
+	struct ipc_namespace *ipc_ns; // 所有与进程间通信有关的信息
+	struct mnt_namespace *mnt_ns; // 已经装载的文件系统的视图
 	struct pid_namespace *pid_ns_for_children;
-	struct net 	     *net_ns;
+	struct net 	     *net_ns; // 网络相关的命名空间参数
 };
 extern struct nsproxy init_nsproxy;
 

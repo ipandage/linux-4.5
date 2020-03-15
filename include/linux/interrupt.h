@@ -131,6 +131,7 @@ request_threaded_irq(unsigned int irq, irq_handler_t handler,
 		     unsigned long flags, const char *name, void *dev);
 
 static inline int __must_check
+// 进行注册自定义handler的功能
 request_irq(unsigned int irq, irq_handler_t handler, unsigned long flags,
 	    const char *name, void *dev)
 {

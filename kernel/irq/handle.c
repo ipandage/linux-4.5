@@ -143,6 +143,7 @@ irqreturn_t handle_irq_event_percpu(struct irq_desc *desc)
 		irqreturn_t res;
 
 		trace_irq_handler_entry(irq, action);
+        // 执行中断的action注册的handler
 		res = action->handler(irq, action->dev_id);
 		trace_irq_handler_exit(irq, action, res);
 
@@ -173,6 +174,7 @@ irqreturn_t handle_irq_event_percpu(struct irq_desc *desc)
 		}
 
 		retval |= res;
+        // 获取下一个action事件
 		action = action->next;
 	}
 

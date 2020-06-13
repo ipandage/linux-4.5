@@ -24,6 +24,7 @@
 /*
  * This controls the default maximum pid allocated to a process
  */
+// 默认 30768
 #define PID_MAX_DEFAULT (CONFIG_BASE_SMALL ? 0x1000 : 0x8000)
 
 /*

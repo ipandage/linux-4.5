@@ -1362,6 +1362,7 @@ choice
 	  If you are not absolutely sure what you are doing, leave this
 	  option alone!
 
+    # 用户空间 内核空间默认3：1，可以改为2：2
 	config VMSPLIT_3G
 		bool "3G/1G user/kernel split"
 	config VMSPLIT_3G_OPT
@@ -1372,6 +1373,7 @@ choice
 		bool "1G/3G user/kernel split"
 endchoice
 
+# 使用 PAGE_OFFSET 计算 虚拟地址和物理地址的转换
 config PAGE_OFFSET
 	hex
 	default PHYS_OFFSET if !MMU

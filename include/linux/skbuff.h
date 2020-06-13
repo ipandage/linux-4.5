@@ -626,6 +626,7 @@ static inline bool skb_mstamp_after(const struct skb_mstamp *t1,
 struct sk_buff {
 	union {
 		struct {
+            // 内核维护了一个sk_buff_head链表, next代表该skb的下一个元素, prev代表上一个元素
 			/* These two members must be first. */
 			struct sk_buff		*next;
 			struct sk_buff		*prev;
@@ -637,8 +638,8 @@ struct sk_buff {
 		};
 		struct rb_node	rbnode; /* used in netem & tcp stack */
 	};
-	struct sock		*sk;
-	struct net_device	*dev;
+	struct sock		*sk; // L4层对应的socket结构
+	struct net_device	*dev; // sbk相关联的网络设备
 
 	/*
 	 * This is the control buffer. It is free to use for every
@@ -659,9 +660,9 @@ struct sk_buff {
 #if IS_ENABLED(CONFIG_BRIDGE_NETFILTER)
 	struct nf_bridge_info	*nf_bridge;
 #endif
-	unsigned int		len,
-				data_len;
-	__u16			mac_len,
+	unsigned int		len, // 整个缓冲区大小, 包括head
+				data_len; // 只包括数据的大小
+	__u16			mac_len, // mac报头大小
 				hdr_len;
 
 	/* Following fields are _not_ copied in __copy_skb_header()
@@ -772,7 +773,7 @@ struct sk_buff {
 	__u16			inner_network_header;
 	__u16			inner_mac_header;
 
-	__be16			protocol;
+	__be16			protocol; // 当前层的协议
 	__u16			transport_header;
 	__u16			network_header;
 	__u16			mac_header;
@@ -786,7 +787,7 @@ struct sk_buff {
 	sk_buff_data_t		end;
 	unsigned char		*head,
 				*data;
-	unsigned int		truesize;
+	unsigned int		truesize; // 缓冲区总大小, 包括skb自己
 	atomic_t		users;
 };
 

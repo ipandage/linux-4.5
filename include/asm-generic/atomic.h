@@ -117,7 +117,7 @@ ATOMIC_OP(xor, ^)
  * Atomic operations that C can't guarantee us.  Useful for
  * resource counting etc..
  */
-
+// 声明一个原子变量并初始化为i
 #define ATOMIC_INIT(i)	{ (i) }
 
 /**
@@ -127,6 +127,7 @@ ATOMIC_OP(xor, ^)
  * Atomically reads the value of @v.
  */
 #ifndef atomic_read
+// 读取原子变量的值
 #define atomic_read(v)	READ_ONCE((v)->counter)
 #endif
 
@@ -137,6 +138,7 @@ ATOMIC_OP(xor, ^)
  *
  * Atomically sets the value of @v to @i.
  */
+ // 设置变量v的值为i
 #define atomic_set(v, i) WRITE_ONCE(((v)->counter), (i))
 
 #include <linux/irqflags.h>
@@ -145,7 +147,7 @@ static inline int atomic_add_negative(int i, atomic_t *v)
 {
 	return atomic_add_return(i, v) < 0;
 }
-
+// 原子的给v增加i
 static inline void atomic_add(int i, atomic_t *v)
 {
 	atomic_add_return(i, v);

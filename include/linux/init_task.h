@@ -187,6 +187,7 @@ extern struct task_group root_task_group;
  *  INIT_TASK is used to set up the first task table, touch at
  * your own risk!. Base=0, limit=0x1fffff (=2MB)
  */
+// idle 进程，所有进程的鼻祖，内核启动时（start_kernel）静态创建
 #define INIT_TASK(tsk)	\
 {									\
 	.state		= 0,						\

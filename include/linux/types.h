@@ -172,6 +172,7 @@ typedef phys_addr_t resource_size_t;
  */
 typedef unsigned long irq_hw_number_t;
 
+// 原子类型变量
 typedef struct {
 	int counter;
 } atomic_t;

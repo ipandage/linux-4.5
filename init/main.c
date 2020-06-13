@@ -494,6 +494,7 @@ static void __init mm_init(void)
 	ioremap_huge_init();
 }
 
+// 相当于内核的main函数
 asmlinkage __visible void __init start_kernel(void)
 {
 	char *command_line;
@@ -515,6 +516,7 @@ asmlinkage __visible void __init start_kernel(void)
 
 	cgroup_init_early();
 
+	// 关闭当前CPU的中断
 	local_irq_disable();
 	early_boot_irqs_disabled = true;
 
@@ -523,7 +525,9 @@ asmlinkage __visible void __init start_kernel(void)
  * enable them
  */
 	boot_cpu_init();
+	// 初始化页地址，使用链表将其连起来
 	page_address_init();
+	// 显示内核版本信息
 	pr_notice("%s", linux_banner);
 	setup_arch(&command_line);
 	mm_init_cpumask(&init_mm);
